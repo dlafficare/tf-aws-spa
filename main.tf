@@ -15,6 +15,8 @@ locals {
     }
   }
 
+  # Content comes either inline from the Console form or from the artifacts bucket
+  inline       = var.index_html != ""
   build_prefix = "${var.deployed_service}/latest/"
 
   tags = merge(
@@ -115,12 +117,14 @@ resource "aws_s3_bucket_policy" "cloudfront" {
 
 # Publish the latest build uploaded by the microservice pipeline
 data "aws_s3_objects" "build" {
+  count = local.inline ? 0 : 1
+
   bucket = var.artifacts_bucket
   prefix = local.build_prefix
 }
 
 data "aws_s3_object" "build" {
-  for_each = toset(data.aws_s3_objects.build.keys)
+  for_each = toset(local.inline ? [] : data.aws_s3_objects.build[0].keys)
 
   bucket = var.artifacts_bucket
   key    = each.value
@@ -139,6 +143,16 @@ resource "aws_s3_object_copy" "build" {
   metadata = {
     source-etag = each.value.etag
   }
+}
+
+# Inline page written in the Console form
+resource "aws_s3_object" "index" {
+  count = local.inline ? 1 : 0
+
+  bucket       = aws_s3_bucket.main.id
+  key          = "index.html"
+  content      = var.index_html
+  content_type = "text/html; charset=utf-8"
 }
 
 # Runtime configuration read by the SPA at startup

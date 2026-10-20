@@ -18,14 +18,22 @@ variable "performance_profile" {
   }
 }
 
-variable "deployed_service" {
-  description = "Name of the microservice whose build is published. Must match the microservice name in the Console: its pipeline uploads the static files under <name>/latest/ in the artifacts bucket."
+variable "index_html" {
+  description = "Inline HTML page published as index.html. When set, deployed_service and artifacts_bucket are ignored."
   type        = string
+  default     = ""
+}
+
+variable "deployed_service" {
+  description = "Name of the microservice whose build is published. Must match the microservice name in the Console: its pipeline uploads the static files under <name>/latest/ in the artifacts bucket. Used when index_html is empty."
+  type        = string
+  default     = ""
 }
 
 variable "artifacts_bucket" {
-  description = "The S3 bucket where microservice pipelines upload their builds."
+  description = "The S3 bucket where microservice pipelines upload their builds. Used when index_html is empty."
   type        = string
+  default     = ""
 }
 
 variable "runtime_config" {
